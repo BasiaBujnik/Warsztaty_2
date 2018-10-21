@@ -145,6 +145,58 @@ public class Solution {
         }
     }
 
+    // dodatkowa metoda na pobranie	wszystkich	rozwiązań	danego	użytkownika
+    public static Solution [] loadAllByUserId (Connection conn, int userId) throws SQLException {
+        ArrayList <Solution> allSolByUserId = new ArrayList <Solution>();
+        String sql1 = "SELECT	*	FROM solution WHERE users.id = ?";
+        PreparedStatement preparedStatement1 = conn.prepareStatement(sql1);
+        preparedStatement1.setInt(1, userId);
+        ResultSet solutionSet = preparedStatement1.executeQuery();
+
+        while (solutionSet.next()) {
+            Solution loadedSolution = new Solution();
+            loadedSolution.id = solutionSet.getInt("id");
+            loadedSolution.created = solutionSet.getDate("created");
+            loadedSolution.updated = solutionSet.getDate("updated");
+            loadedSolution.description = solutionSet.getString("desciption");
+            loadedSolution.exercise = new Exercise();
+            loadedSolution.user = new User();
+
+            allSolByUserId.add(loadedSolution);
+        }
+        Solution [] allSolutionArray = new Solution [allSolByUserId.size()];
+        allSolutionArray = allSolByUserId.toArray(allSolutionArray);
+        return allSolutionArray;
+    }
+
+    // dodatkowa metoda na pobranie	wszystkich	rozwiązań	danego	zadania,	posortowanych	od	najnowszego	do	najstarszego
+    public static Solution [] loadAllByExerciseId (Connection conn, int exerciseId) throws SQLException {
+        ArrayList<Solution> allSolByExerciseId = new ArrayList<Solution>();
+        String sql1 = " select * from solution WHERE exercise.id = ? ORDER BY updated ASC;";
+        PreparedStatement preparedStatement1 = conn.prepareStatement(sql1);
+        preparedStatement1.setInt(1, exerciseId);
+        ResultSet solutionSet = preparedStatement1.executeQuery();
+
+        while (solutionSet.next()) {
+            Solution loadedSolution = new Solution();
+            loadedSolution.id = solutionSet.getInt("id");
+            loadedSolution.created = solutionSet.getDate("created");
+            loadedSolution.updated = solutionSet.getDate("updated");
+            loadedSolution.description = solutionSet.getString("desciption");
+            loadedSolution.exercise = new Exercise();
+            loadedSolution.user = new User();
+
+            allSolByExerciseId.add(loadedSolution);
+        }
+        Solution[] allSolutionArray = new Solution[allSolByExerciseId.size()];
+        allSolutionArray = allSolByExerciseId.toArray(allSolutionArray);
+        return allSolutionArray;
+    }
+
+
+
+
+
     public String toString(Solution solution) {
         return "Solution{" +
                 "id=" + id +

@@ -154,6 +154,11 @@ public class User {
         }
     }
 
+    // metoda na pobranie	wszystkich	członków	danej	grupy
+    public static User [] loadAllByGroupId (Connection conn, int groupId) throws SQLException {
+        ArrayList <User> 
+    }
+
     @Override
     public String toString() {
         return "User{" +
