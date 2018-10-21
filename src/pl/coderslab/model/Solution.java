@@ -1,168 +1,156 @@
 package pl.coderslab.model;
 
-import pl.coderslab.util.BCrypt;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
 
-public class User {
+public class Solution {
 
-    //atrybuty do kolumny w bazie danych
     private int id;
-    private String userName;
-    private String email;
-    private String password;
-    private UserGroup userGroup;   // obiekt z user_group (w pakiecie model stworzyc nową klase user_group)
+    private Date created;
+    private Date updated;
+    private String description;
+    private Exercise exercise;
+    private User user;
 
-    public User () {
+
+    public Solution() {
 
     }
 
-    // konstruktor
-    public User (String userName, String email, String password, UserGroup userGroup) {
-        this.userName = userName;
-        this.email = email;
-        this.setPassword(password);   // setPassword(password);
-        this.userGroup = userGroup;
+    public Solution (int id, Date created, Date updated, String description, Exercise exercise, User user) {
+        this.id = id;
+        this.created = created;
+        this.updated = updated;
+        this.description = description;
+        this.exercise = exercise;
+        this.user = user;
     }
 
     public int getId() {
         return id;
     }
 
-//    public void setId(int id) {
-//        this.id = id;                        // ten setter wywalic bo nie chce by ktos z zewnatrz wprowadzal te dane
-//    }
-
-
-    public String getUserName() {
-        return userName;
+    public Date getCreated() {
+        return created;
     }
 
-    public void setUserName(String userName) {
-        this.userName = userName;
+    public void setCreated(Date created) {
+        this.created = created;
     }
 
-    public String getEmail() {
-        return email;
+    public Date getUpdated() {
+        return updated;
     }
 
-    public void setEmail(String email) {
-        this.email = email;
+    public void setUpdated(Date updated) {
+        this.updated = updated;
     }
 
-    public String getPassword() {
-        return password;
+    public String getDescription() {
+        return description;
     }
 
-    // hasło przez setter bo bedzie szyfrowane
-    private void setPassword(String password) {
-        this.password = BCrypt.hashpw(password, BCrypt.gensalt());  // ta linijka będzie szyfrować hasła, gensalt , czyli generuja zaszyfrowane hasło
+    public void setDescription(String description) {
+        this.description = description;
     }
 
-    public UserGroup getUserGroup() {
-        return userGroup;
+    public Exercise getExercise() {
+        return exercise;
     }
 
-    public void setUserGroup(UserGroup userGroup) {
-        this.userGroup = userGroup;
+    public void setExercise(Exercise exercise) {
+        this.exercise = exercise;
     }
 
+    public User getUser() {
+        return user;
+    }
 
+    public void setUser(User user) {
+        this.user = user;
+    }
 
-
-//    Zapisywanie	nowego	obiektu	do	bazy	danych
-    public	void	saveToDB(Connection conn)	throws SQLException {
-        if	(this.id	==	0)	{                 // Zapisujemy	obiekt	do	bazy,	tylko	wtedy	gdy	jego	id	jest	równe	0.
-            String	sql	=	"INSERT	INTO	users(user_name,	email,	password, user_group_id)	VALUES	(?,	?,	?, ?)";
-            String[]	generatedColumns	=	{	"ID"	};
-            PreparedStatement preparedStatement	= conn.prepareStatement(sql, generatedColumns);
-            preparedStatement.setString(1,	this.userName);
-            preparedStatement.setString(2,	this.email);
-            preparedStatement.setString(3,	this.password);
-            preparedStatement.setInt(4, this.userGroup.getID());
-            preparedStatement.executeUpdate();                          // Update do ZAPISU
-            ResultSet rs	=	preparedStatement.getGeneratedKeys();   // wyciągnięcie kluczy o które prosiliśmy i przypisanie do zmiennej rs
-            if	(rs.next())	{
-                this.id	=	rs.getInt(1);                // Pobieramy	wstawiony	do	bazy	identyfikator,	a	następnie	ustawiamy	id	obiektu.
+    public void saveSolutionToDB(Connection conn) throws SQLException {
+        if (this.id == 0) {
+            String sql = "INSERT INTO solution (created, updated, description, exercise_id, user_id)	VALUES	(?, ?, ?)";
+            String[] generatedColumns = {"ID"};
+            PreparedStatement preparedStatement = conn.prepareStatement(sql, generatedColumns);
+            preparedStatement.setDate(1, this.created);
+            preparedStatement.setDate(2, this.updated);
+            preparedStatement.setString(3, this.description);
+            preparedStatement.executeUpdate();
+            ResultSet rsSolution = preparedStatement.getGeneratedKeys();
+            if (rsSolution.next()) {
+                this.id = rsSolution.getInt(1);
             }
-        } // do modyfikacji obiektu dopisany else, tu kod	aktualizujący	dane	znajdujące	się w bazie
-        else {
-            String	sql	=	"UPDATE	users	SET	username=?,	email=?, password=?, user_group_id=?	where	id	=	?";
-            PreparedStatement	preparedStatement	=	conn.prepareStatement(sql);
-            preparedStatement.setString(1,	this.userName);
-            preparedStatement.setString(2,	this.email);
-            preparedStatement.setString(3,	this.password);
-            preparedStatement.setInt(4, this.userGroup.getID());
-            preparedStatement.setInt(5,	this.id);
+        } else {
+            String sql = "UPDATE solution	SET	created =?, updated =?, description =?	where	id	=	?";
+            PreparedStatement preparedStatement = conn.prepareStatement(sql);
+            preparedStatement.setDate (1, this.created);
+            preparedStatement.setDate(2, this.updated);
+            preparedStatement.setString(3, this.description);
+            preparedStatement.setInt(4, this.id);
             preparedStatement.executeUpdate();
         }
     }
 
-    // wczytywanie obiektu z bazy danych
-    static	public	User	loadUserById(Connection	conn,	int	id)	throws	SQLException {  // Metoda	jest	statyczna	–	możemy	jej	używać	na	klasie,	zamiast	na	obiekcie.
-        String	sql	=	"SELECT	*	FROM	users	where	id=?";
-        PreparedStatement	preparedStatement	=	conn.prepareStatement(sql);
-        preparedStatement.setInt(1,	id);
-        ResultSet	resultSet	=	preparedStatement.executeQuery();
-        if	(resultSet.next())	{
-            User	loadedUser	=	new	User();  // Tworzymy	nowy	obiekt	typu	User	i	ustawiamy	mu	odpowiednie	parametry.
-            // 	Jesteśmy	w	środku	klasy, mamy	zatem	dostęp	do	własności	prywatnych,	mimo	korzystania	z	metody	statycznej.
-            loadedUser.id	=	resultSet.getInt("id");
-            loadedUser.userName	=	resultSet.getString("user_name");
-            loadedUser.password	=	resultSet.getString("password");
-            loadedUser.email	=	resultSet.getString("email");
-            loadedUser.userGroup = new UserGroup(1) ;     // usergroup jest typu..., majac id grupy wyciągnac cały obiekt grupy, MOZEMY tu zrobic nowego
-            return	loadedUser;}                              // zwracamy obiekt użytkownika
-        return	null;}                                        // albo null
+
+    static public Solution loadedSolutionById(Connection conn, int id) throws SQLException {
+        String sql = "SELECT	*	FROM	solution	where	id=?";
+        PreparedStatement preparedStatement = conn.prepareStatement(sql);
+        preparedStatement.setInt(1, id);
+        ResultSet rsSolution = preparedStatement.executeQuery();
+        if (rsSolution.next()) {
+            Solution loadedSolution = new Solution();
+            loadedSolution.id = rsSolution.getInt("id");
+            loadedSolution.created = rsSolution.getDate("created");
+            loadedSolution.updated = rsSolution.getDate("updated");
+            loadedSolution.description = rsSolution.getString("description");
+            return loadedSolution;
+        }
+        return null;
+    }
 
 
-    @Override
-    public String toString() {
-        return "User{" +
+    static public Solution [] loadAllSolution (Connection conn) throws SQLException {
+        ArrayList <Solution> solutions = new ArrayList <Solution>();
+        String sql1 = "SELECT	*	FROM solution";
+        PreparedStatement preparedStatement1 = conn.prepareStatement(sql1);
+        ResultSet solutionSet = preparedStatement1.executeQuery();
+        while (solutionSet.next()) {
+            Solution loadedSolution = new Solution();
+            loadedSolution.id = solutionSet.getInt("id");
+            loadedSolution.created = solutionSet.getDate("created");
+            loadedSolution.updated = solutionSet.getDate("updated");
+            loadedSolution.description = solutionSet.getString("desciption");
+            //wczytac exercise i user
+            loadedSolution.exercise = new Exercise();
+            loadedSolution.user = new User();
+
+            solutions.add(loadedSolution);
+        }
+        Solution [] solutionArray = new Solution [solutions.size()];
+        solutionArray = solutions.toArray(solutionArray);
+        return solutionArray;
+    }
+
+
+    public void delete(Connection connection) throws SQLException {
+        if (this.id != 0) {
+            String sql2 = "DELETE	FROM solution WHERE	id=?";
+            PreparedStatement preparedStatement = connection.prepareStatement(sql2);
+            preparedStatement.setInt(1, this.id);
+            preparedStatement.executeUpdate();
+            this.id = 0;
+        }
+    }
+
+    public String toString(Solution solution) {
+        return "Solution{" +
                 "id=" + id +
-                ", userName='" + userName + '\'' +
-                ", email='" + email + '\'' +
-                ", password='" + password + '\'' +
+                ", created=" + created +
+                ", updated=" + updated +
+                ", description='" + description + '\'' +
                 '}';
     }
-
-    // wczytywanie wielu oiektów z bazy danych
-    static	public	User[]	loadAllUsers(Connection	conn)	throws	SQLException { // Pomocniczo	wykorzystujemy	obiekt	klasy	ArrayList,	traktujmy	go	jako	rozszerzalną	tablicę.
-        ArrayList<User>	users	=	new ArrayList<User>();
-        String	sql1	=	"SELECT	*	FROM	users";
-        PreparedStatement	preparedStatement1	=	conn.prepareStatement(sql1);
-        ResultSet	resultSet1	=	preparedStatement1.executeQuery();
-        while	(resultSet1.next())	{   // Tworzymy	nowy	obiekt	użytkownika	i	ustawiamy	mu	odpowiednie	parametry.
-            User	loadedUser	=	new	User();
-            loadedUser.id	=	resultSet1.getInt("id");
-            loadedUser.userName	=	resultSet1.getString("user_name");
-            loadedUser.password	=	resultSet1.getString("password");
-            loadedUser.email	=	resultSet1.getString("email");
-            users.add(loadedUser);}               // Po	stworzeniu	i	wypełnieniu	obiektu	danymi	dodajemy	go	do	listy
-          // Tworzymy	tablicę	elementów	typu	User	o	rozmiarze	pobranym	z	listy. Przekształcamy	listę	na	tablicę.
-        User[]	uArray	=	new	User[users.size()];	uArray	=	users.toArray(uArray);
-        return	uArray;
-    }
-
-
-    // metoda na usunięcie obiektu
-    public	void	delete (Connection connection)	throws	SQLException {
-        if	(this.id !=	0)	{
-            String	sql2	= "DELETE	FROM	users	WHERE	id=?";
-            PreparedStatement preparedStatement	=	connection.prepareStatement(sql2);
-            preparedStatement.setInt(1,	this.id);
-            preparedStatement.executeUpdate();
-            this.id	= 0; // Usunęliśmy	obiekt,	zmieniamy	zatem	jego	id	na	0.
-        }
-    }
-
-
-
-
-
 }
-
