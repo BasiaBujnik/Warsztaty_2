@@ -1,3 +1,5 @@
+// nieskończony program
+
 package pl.coderslab;
 
 import pl.coderslab.model.User;
